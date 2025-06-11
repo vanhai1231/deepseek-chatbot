@@ -1,22 +1,28 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import requests
 import os
 from dotenv import load_dotenv
 
-# Load biến môi trường (chỉ dùng local)
 load_dotenv()
-
-# FastAPI khởi tạo
 app = FastAPI()
 
-# Lấy API key và model từ biến môi trường
+# Mount thư mục
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 MODEL = os.getenv("MODEL", "deepseek-chat")
 
-# Định nghĩa schema cho request body
 class Prompt(BaseModel):
     message: str
+
+@app.get("/", response_class=HTMLResponse)
+def get_home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/chat")
 def chat(prompt: Prompt):
@@ -24,7 +30,6 @@ def chat(prompt: Prompt):
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json"
     }
-
     data = {
         "model": MODEL,
         "messages": [
@@ -32,10 +37,7 @@ def chat(prompt: Prompt):
             {"role": "user", "content": prompt.message}
         ]
     }
-
     res = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
-
-    # Trích nội dung trả lời
     if res.status_code == 200:
         reply = res.json()["choices"][0]["message"]["content"]
         return {"response": reply}
