@@ -18,7 +18,7 @@ templates = Jinja2Templates(directory="templates")
 
 # Lấy biến môi trường
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-MODEL = os.getenv("MODEL", "deepseek-ai/deepseek-chat")
+MODEL = os.getenv("MODEL", "deepseek/deepseek-chat")
 
 # Schema dữ liệu gửi từ frontend
 class Prompt(BaseModel):
